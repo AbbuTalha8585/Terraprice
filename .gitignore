@@ -1,0 +1,47 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Secrets & Credentials
+*.pem
+*.key
+*.cert
+*.tfvars
+secrets.yaml
+*-secret.yaml
+*-secrets.yaml
+kubeconfig
+credentials
+aws_credentials
+oci_api_key.pem

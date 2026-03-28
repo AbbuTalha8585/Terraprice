@@ -1,0 +1,33 @@
+{
+  "title": "TerraPrice — Kubernetes Monitoring",
+  "panels": [
+    {
+      "title": "Backend pod count (HPA demo)",
+      "type": "stat",
+      "targets": [{ "expr": "count(kube_pod_info{namespace='default', pod=~'terraprice-backend.*'})" }]
+    },
+    {
+      "title": "CPU usage per pod",
+      "type": "graph",
+      "targets": [{ "expr": "rate(container_cpu_usage_seconds_total{pod=~'terraprice-backend.*'}[1m])" }]
+    },
+    {
+      "title": "Memory usage per pod",
+      "type": "graph",
+      "targets": [{ "expr": "container_memory_usage_bytes{pod=~'terraprice-backend.*'}" }]
+    },
+    {
+      "title": "API requests per second",
+      "type": "graph",
+      "targets": [{ "expr": "rate(http_requests_total{job='terraprice-backend'}[1m])" }]
+    },
+    {
+      "title": "HPA desired vs current replicas",
+      "type": "graph",
+      "targets": [
+        { "expr": "kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler='terraprice-backend-hpa'}", "legendFormat": "Current" },
+        { "expr": "kube_horizontalpodautoscaler_status_desired_replicas{horizontalpodautoscaler='terraprice-backend-hpa'}", "legendFormat": "Desired" }
+      ]
+    }
+  ]
+}

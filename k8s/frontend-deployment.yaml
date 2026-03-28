@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terraprice-frontend
+  labels:
+    app: terraprice-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terraprice-frontend
+  template:
+    metadata:
+      labels:
+        app: terraprice-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 486036153335.dkr.ecr.us-east-1.amazonaws.com/terraprice-frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terraprice-frontend-svc
+spec:
+  selector:
+    app: terraprice-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

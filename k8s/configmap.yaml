@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terraprice-config
+data:
+  DATABASE_URL: "postgresql://postgres:TerraPrice2024!@terraprice-db.cylik42igco2.us-east-1.rds.amazonaws.com:5432/terraprice"
+  REDIS_URL: "redis://terraprice-redis-svc:6379"
+  AWS_DEFAULT_REGION: "us-east-1"

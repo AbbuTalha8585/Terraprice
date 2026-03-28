@@ -1,0 +1,86 @@
+name: Terraform Cost Diff on PR
+
+on:
+  pull_request:
+    paths:
+      - "**.tf"
+
+jobs:
+  cost-diff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed .tf files
+        id: changed
+        run: |
+          echo "files=$(git diff --name-only origin/main HEAD | grep '.tf' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Estimate cost diff
+        id: estimate
+        run: |
+          # Combine all changed .tf files into one string for the API
+          FILES="${{ steps.changed.outputs.files }}"
+          CODE=""
+          for f in $FILES; do
+            if [ -f "$f" ]; then
+              CODE="$CODE$(cat "$f")\n"
+            fi
+          done
+          
+          # Escape for JSON
+          ESCAPED_CODE=$(echo -n "$CODE" | jq -Rs .)
+          
+          # Call API
+          RESPONSE=$(curl -s -X POST "${{ secrets.TERRAPRICE_API_URL }}/estimate" \
+            -H "Content-Type: application/json" \
+            -d "{\"terraform_code\": $ESCAPED_CODE}")
+          
+          echo "response=$RESPONSE" >> $GITHUB_OUTPUT
+
+      - name: Comment cost diff on PR
+        uses: actions/github-script@v7
+        env:
+          API_RESPONSE: ${{ steps.estimate.outputs.response }}
+        with:
+          script: |
+            if (!process.env.API_RESPONSE) {
+              console.log("No API response found.");
+              return;
+            }
+            const response = JSON.parse(process.env.API_RESPONSE);
+            const { total_aws, total_azure, total_gcp, cheapest_provider, smell_issues, spot_recommendations } = response;
+            
+            let body = `## 💸 TerraPrice Cost Impact Analysis\n\n`;
+            body += `This PR modifies Terraform files. Here is the estimated monthly cost across providers:\n\n`;
+            body += `| Provider | Estimated Monthly Cost |\n`;
+            body += `| :--- | :--- |\n`;
+            body += `| 🟢 **AWS** | $${total_aws} |\n`;
+            body += `| 🔵 **Azure** | $${total_azure} |\n`;
+            body += `| 🟡 **GCP** | $${total_gcp} |\n\n`;
+            
+            body += `🏆 **Cheapest Provider:** ${cheapest_provider}\n\n`;
+            
+            if (smell_issues && smell_issues.length > 0) {
+              body += `### ⚠️ Design Smells Detected\n`;
+              smell_issues.forEach(issue => {
+                body += `- **${issue.type}**: ${issue.description} (Severity: ${issue.severity})\n`;
+              });
+              body += `\n`;
+            }
+            
+            if (spot_recommendations && spot_recommendations.length > 0) {
+              body += `### 💡 Spot Instance Recommendations\n`;
+              spot_recommendations.forEach(rec => {
+                body += `- **${rec.resource}**: ${rec.recommendation} (Savings: ${rec.potential_savings})\n`;
+              });
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
