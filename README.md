@@ -64,7 +64,7 @@ docker push <ECR_URL>/terraprice-backend:latest
 
 ### 3. Deploy to EKS
 ```bash
-aws eks update-kubeconfig --name terraprice-cluster --region us-east-1
+aws eks update-kubeconfig --name terraprice-eks-cluster --region us-east-1
 kubectl apply -f k8s/
 ```
 

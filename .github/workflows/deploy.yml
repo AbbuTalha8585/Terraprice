@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  EKS_CLUSTER: terraprice-cluster
+  EKS_CLUSTER: terraprice-eks-cluster
 
 jobs:
   deploy:
