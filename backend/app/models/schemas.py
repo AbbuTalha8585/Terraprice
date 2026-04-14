@@ -10,12 +10,18 @@ class EstimateRequest(BaseModel):
     enable_dr: Optional[bool] = False
 
 
+class ProviderPrice(BaseModel):
+    service_name: str      # e.g. "EC2 t3.large", "Azure B2ms", "n1-standard-2"
+    price: float           # monthly price in USD
+
 class ResourceCost(BaseModel):
     name: str
     resource_type: str
     aws: float
     azure: float
     gcp: float
+    best_provider: Optional[str] = None
+    provider_details: Optional[Dict[str, ProviderPrice]] = None
 
 
 class SmellIssue(BaseModel):

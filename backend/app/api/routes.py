@@ -16,6 +16,7 @@ from typing import List
 router = APIRouter()
 
 
+
 @router.post("/estimate", response_model=EstimateResponse)
 async def estimate_cost(request: EstimateRequest):
     """
@@ -44,16 +45,33 @@ async def estimate_cost(request: EstimateRequest):
             azure = get_azure_cost(rtype, config, count)
             gcp = get_gcp_cost(rtype, config, count)
 
-            total_aws += aws
-            total_azure += azure
-            total_gcp += gcp
+            total_aws += aws if aws >= 0 else 0
+            total_azure += azure if azure >= 0 else 0
+            total_gcp += gcp if gcp >= 0 else 0
 
+            # Find best provider for this resource
+            prices = {"AWS": aws, "Azure": azure, "GCP": gcp}
+            valid = {k: v for k, v in prices.items() if v >= 0}
+            best_provider = min(valid, key=valid.get) if valid else ""
+
+            service_names = {
+                "AWS":   get_aws_service_name(rtype, config),
+                "Azure": get_azure_service_name(rtype, config),
+                "GCP":   get_gcp_service_name(rtype, config),
+            }
+            
             resource_costs.append({
                 "name": rname,
                 "resource_type": get_resource_label(rtype),
                 "aws": round(aws, 2),
                 "azure": round(azure, 2),
                 "gcp": round(gcp, 2),
+                "best_provider": best_provider,
+                "provider_details": {
+                    "AWS":   {"service_name": service_names["AWS"],   "price": round(aws, 2)},
+                    "Azure": {"service_name": service_names["Azure"], "price": round(azure, 2)},
+                    "GCP":   {"service_name": service_names["GCP"],   "price": round(gcp, 2)},
+                }
             })
 
         # Step 3: Find cheapest provider
@@ -131,3 +149,46 @@ def get_supported_resources():
             "google_compute_instance", "google_sql_database_instance", "google_storage_bucket",
         ]
     }
+from app.parser.resource_mapper import RESOURCE_MAP
+
+def get_aws_service_name(rtype: str, config: dict) -> str:
+    rtype = RESOURCE_MAP.get(rtype, {}).get("aws", rtype)
+    if "instance" in rtype and "db" not in rtype:
+        return f"EC2 {config.get('instance_type', 't3.medium')}"
+    elif "db_instance" in rtype:
+        return f"RDS {config.get('instance_class', 'db.t3.micro')}"
+    elif "s3" in rtype:
+        return "S3 Standard"
+    elif "_lb" in rtype or "_alb" in rtype:
+        return "ALB"
+    elif "nat_gateway" in rtype:
+        return "NAT Gateway"
+    return rtype.replace("aws_", "").replace("_", " ").title()
+
+def get_azure_service_name(rtype: str, config: dict) -> str:
+    rtype = RESOURCE_MAP.get(rtype, {}).get("azure", rtype)
+    if "virtual_machine" in rtype:
+        return f"Azure VM {config.get('vm_size', 'Standard_B2ms')}"
+    elif "sql_database" in rtype:
+        return "Azure SQL Database"
+    elif "storage_account" in rtype:
+        return "Blob Storage"
+    elif "azurerm_lb" in rtype:
+        return "Azure Load Balancer"
+    elif "nat_gateway" in rtype:
+        return "Azure NAT Gateway"
+    return rtype.replace("azurerm_", "").replace("_", " ").title()
+
+def get_gcp_service_name(rtype: str, config: dict) -> str:
+    rtype = RESOURCE_MAP.get(rtype, {}).get("gcp", rtype)
+    if "compute_instance" in rtype:
+        return f"Compute Engine {config.get('machine_type', 'n1-standard-2')}"
+    elif "sql_database" in rtype:
+        return "Cloud SQL"
+    elif "storage_bucket" in rtype:
+        return "Cloud Storage"
+    elif "forwarding_rule" in rtype:
+        return "Cloud Load Balancing"
+    elif "router_nat" in rtype:
+        return "Cloud NAT"
+    return rtype.replace("google_", "").replace("_", " ").title()

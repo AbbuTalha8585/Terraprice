@@ -11,8 +11,8 @@ export default function Home() {
   const [tab, setTab] = useState("file");
   const navigate = useNavigate();
 
-  const handleResult = (result) => {
-    navigate("/dashboard", { state: { result } });
+  const handleResult = (result, uploadedCode) => {
+    navigate("/dashboard", { state: { result, code: uploadedCode } });
   };
 
   const handleEstimate = async () => {

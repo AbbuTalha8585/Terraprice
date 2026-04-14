@@ -1,0 +1,31 @@
+cluster:
+  name: terraprice
+destinations:
+  - name: grafana-cloud-metrics
+    type: prometheus
+    url: https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push
+    auth:
+      type: basic
+      username: "3074850"
+      password: "<REDACTED>"
+  - name: grafana-cloud-logs
+    type: loki
+    url: https://logs-prod-028.grafana.net/loki/api/v1/push
+    auth:
+      type: basic
+      username: "1533100"
+      password: "<REDACTED>"
+clusterMetrics:
+  enabled: true
+clusterEvents:
+  enabled: true
+podLogs:
+  enabled: true
+applicationObservability:
+  enabled: false
+alloy-metrics:
+  enabled: true
+alloy-singleton:
+  enabled: true
+alloy-logs:
+  enabled: true

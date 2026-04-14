@@ -4,6 +4,7 @@ import ForecastChart from "../components/ForecastChart";
 import SmellDetector from "../components/SmellDetector";
 import SpotScore from "../components/SpotScore";
 import DRMode from "../components/DRMode";
+import TopologyView from "./TopologyView";
 
 export default function Dashboard() {
   const { state } = useLocation();
@@ -14,7 +15,7 @@ export default function Dashboard() {
     return null;
   }
 
-  const { result } = state;
+  const { result, code } = state;
 
   const providerColors = {
     AWS: "#FF9900",
@@ -76,6 +77,7 @@ export default function Dashboard() {
 
       {/* All feature sections */}
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {code && <TopologyView tfCode={code} />}
         <CostTable
           resources={result.resources}
           totalAws={result.total_aws}

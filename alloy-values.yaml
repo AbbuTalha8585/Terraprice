@@ -1,0 +1,43 @@
+alloy:
+  configMap:
+    content: |
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces {
+          names = ["default"]
+        }
+      }
+
+      prometheus.scrape "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+        scrape_interval = "30s"
+      }
+
+      prometheus.scrape "kube_state" {
+        targets = [{
+          __address__ = "kube-state-metrics.monitoring.svc.cluster.local:8080",
+        }]
+        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+        scrape_interval = "15s"
+      }
+
+      prometheus.remote_write "grafana_cloud" {
+        endpoint {
+          url = "https://prometheus-prod-43-prod-ap-south-1.grafana.net/api/prom/push"
+          basic_auth {
+            username = "3074850"
+            password = "<REDACTED>"
+          }
+        }
+      }
+
+nodeSelector:
+  node-role: monitoring
+
+resources:
+  requests:
+    memory: 50Mi
+    cpu: 50m
+  limits:
+    memory: 100Mi

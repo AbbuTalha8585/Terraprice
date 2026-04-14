@@ -31,7 +31,7 @@ export default function DropZone({ onResult, onLoading }) {
       // Read file as text and send to estimate endpoint
       const text = await file.text();
       const result = await estimateCost(text);
-      onResult(result);
+      onResult(result, text);
     } catch (e) {
       setError(e.message || "Failed to estimate cost");
     } finally {
